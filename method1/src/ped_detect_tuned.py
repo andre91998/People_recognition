@@ -62,8 +62,8 @@ while True:
     orig = frame.copy()
     
     # detect people in the image
-    (rects, weights) = hog.detectMultiScale(frame, winStride=(4, 4),
-     padding=(8, 8), scale=1.05)
+    (rects, weights) = hog.detectMultiScale(frame, winStride=(8, 8),
+     padding=(8, 8), scale=1.2)
     
     # draw the original bounding boxes
     for (x, y, w, h) in rects: 

@@ -11,6 +11,7 @@ from collections import deque
 from imutils.object_detection import non_max_suppression
 from imutils.video import VideoStream
 from imutils import paths
+from skimage.filters import sobel, unsharp_mask
 import numpy as np
 import argparse
 import imutils
@@ -60,10 +61,15 @@ while True:
     # resize image it to (1) reduce detection time and (2) improve detection accuracy
     frame = imutils.resize(frame, width=min(400, frame.shape[1]))
     orig = frame.copy()
+    #cv2.imshow("sobel",sobel(frame[:,:,0]))
+    #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    #cv2.imshow("gray", gray)
+    #cv2.imshow("sharpen",unsharp_mask(gray))
+    #frame = unsharp_mask(gImg)
     
     # detect people in the image
-    (rects, weights) = hog.detectMultiScale(frame, winStride=(4, 4),
-     padding=(8, 8), scale=1.05)
+    (rects, weights) = hog.detectMultiScale(frame, winStride=(7,7),
+     padding=(4,4), scale=1.3)
     
     # draw the original bounding boxes
     for (x, y, w, h) in rects: 

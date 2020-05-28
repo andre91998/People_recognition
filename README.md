@@ -7,3 +7,7 @@ Pedestrain Recognition algorithms developed for Image Processing and Graphics (e
   - André Barros de Medeiros
   
 ### Method 1: HOG assisted by Linear SVM
+
+### Method 2: Improved HoG for Image Analysis with Image Preprocessing
+
+### Method 3: Improved performance for Real Time video applications by Frame Drop Algorithm

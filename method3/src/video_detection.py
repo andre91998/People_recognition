@@ -11,10 +11,7 @@ from collections import deque
 from imutils.object_detection import non_max_suppression
 from imutils.video import VideoStream
 from imutils import paths
-from skimage.filters import sobel, unsharp_mask
-from scipy.spatial.distance import directed_hausdorff
-from scipy.spatial import Voronoi, voronoi_plot_2d
-import matplotlib.pyplot as plt
+from scipy.stats import pearsonr
 import numpy as np
 import argparse
 import imutils
@@ -61,21 +58,14 @@ while True:
     # then we have reached the end of the video
     if frame is None:
         break
+    
     if old_frame is None:
         
         # resize image it to (1) reduce detection time and (2) improve detection accuracy
         frame = imutils.resize(frame, width=min(400, frame.shape[1]))
         orig = frame.copy()
-        old_frame = orig
-        #vor = Voronoi(orig[:,:,0])
-        #voronoi_plot_2d(vor)
-        #plt.show()
-        #cv2.imshow("sobel",sobel(frame[:,:,0]))
-        #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        #cv2.imshow("gray", gray)
-        #cv2.imshow("sharpen",unsharp_mask(gray))
-        #frame = unsharp_mask(gImg)
-        
+        old_frame = orig.flatten() #update old frame
+
         # detect people in the image
         (rects, weights) = hog.detectMultiScale(frame, winStride=(7,7),
          padding=(4,4), scale=1.3)
@@ -98,7 +88,7 @@ while True:
         #cv2.imshow("Before NMS", orig)
         cv2.imshow("After NMS", frame)
         
-        # increment counter and update last frame
+        # increment counter
         counter += 1
         
         # if the 'q' key is pressed, stop the loop
@@ -110,20 +100,19 @@ while True:
         
         # resize image it to (1) reduce detection time and (2) improve detection accuracy
         frame = imutils.resize(frame, width=min(400, frame.shape[1]))
-        if max(directed_hausdorff(frame[:,:,0], old_frame[:,:,0])[0], directed_hausdorff(old_frame[:,:,0], frame[:,:,0])[0]) > 0:
+        
+        #flatten current frame for running the Pearson's Correlation 
+        flat_frame = frame.flatten()
+        #calculate the pearson's correlation coeficient
+        coef = pearsonr(flat_frame, old_frame) #tuple
+        print(coef)
+        if (((coef[0] < 0.97)and(coef[0]>0))or((coef[0]>-0.97)and(coef[0]<0))):
             orig = frame.copy()
-            #vor = Voronoi(orig[:,:,0])
-            #voronoi_plot_2d(vor)
-            #plt.show()
-            #cv2.imshow("sobel",sobel(frame[:,:,0]))
-            #gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            #cv2.imshow("gray", gray)
-            #cv2.imshow("sharpen",unsharp_mask(gray))
-            #frame = unsharp_mask(gImg)
+            old_frame = orig.flatten() #update old_frame
             
             # detect people in the image
-            (rects, weights) = hog.detectMultiScale(frame, winStride=(7,7),
-             padding=(4,4), scale=1.3)
+            (rects, weights) = hog.detectMultiScale(frame, winStride=(4,4),
+             padding=(8,8), scale=1.05)
             
             # draw the original bounding boxes
             for (x, y, w, h) in rects: 
@@ -151,6 +140,19 @@ while True:
             # (& 0xFF) keeps last 8 bits of  waitKey output
             if key == ord("q"): break
         
+        else:
+            # draw the same rectangle as before on the current frame (which wasn't proccessed by HoG)
+            for (xA, yA, xB, yB) in pick:
+                cv2.rectangle(frame, (xA, yA), (xB, yB), (0, 255, 0), 2)
+            
+            cv2.imshow("After NMS", frame)
+            counter += 1
+            
+            # if the 'q' key is pressed, stop the loop
+            key = cv2.waitKey(1) & 0xFF 
+            # (& 0xFF) keeps last 8 bits of  waitKey output
+            if key == ord("q"): break
+            
         
 # if we are not using a video file, stop the camera video stream
 if not args.get("video", False): vs.stop()

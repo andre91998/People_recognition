@@ -6,3 +6,5 @@ In *video_detection.py*, we use Pearson's Correlation Coeficient to evaluate how
     - Numpy
     - argparse
     - imutils (for imutils in Anaconda: conda install -c conda-forge imutils)
+    - scipy.stats
+    - time

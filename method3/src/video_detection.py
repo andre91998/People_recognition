@@ -29,6 +29,8 @@ args = vars(ap.parse_args())
 counter = 0
 pts = deque(maxlen=args["buffer"])
 
+coef = (0,0)
+
 # if a video path was not supplied, grab the reference to the webcam
 if not args.get("video", False):
 	vs = VideoStream(src=0).start()
@@ -104,9 +106,22 @@ while True:
         #flatten current frame for running the Pearson's Correlation 
         flat_frame = frame.flatten()
         #calculate the pearson's correlation coeficient
-        coef = pearsonr(flat_frame, old_frame) #tuple
-        print(coef)
-        if (((coef[0] < 0.97)and(coef[0]>0))or((coef[0]>-0.97)and(coef[0]<0))):
+        coef = pearsonr(flat_frame, old_frame)
+        
+        #if on second frame, create threshold_arr for holding the PCCs
+        if (counter == 1): 
+            threshold_arr = np.array(coef[0])
+            
+        #if on any other frame, append to the array
+        else:
+            threshold_arr = np.append(threshold_arr, coef[0])
+            
+        #dynamical threshold calcuation: mean of all previous PCCs    
+        threshold = np.mean(threshold_arr)
+        print(coef,threshold)
+        
+        #if PCC below the threshold, re-classify
+        if (((coef[0] < threshold)and(coef[0]>0))or((coef[0]>-1*threshold)and(coef[0]<0))):
             orig = frame.copy()
             old_frame = orig.flatten() #update old_frame
             
@@ -140,6 +155,7 @@ while True:
             # (& 0xFF) keeps last 8 bits of  waitKey output
             if key == ord("q"): break
         
+        # if PCC is above threshold, update frame, but keep same rectangles
         else:
             # draw the same rectangle as before on the current frame (which wasn't proccessed by HoG)
             for (xA, yA, xB, yB) in pick:
